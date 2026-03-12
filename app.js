@@ -185,15 +185,17 @@ async function startEmulator()
 
     await destroyEmulator();
 
+    showSerialLog();
+
     if(currentBootMode === "state")
     {
-        setStatus("Restoring saved state — you should reach the minishell prompt in a few seconds.");
-        hideSerialLog();
+        setStatus("Downloading saved state (80 MB)… this can take 15–60 s depending on your connection.");
+        serialLog.status.textContent = "loading state…";
+        serialLog.textarea.value = "[ Saved state is downloading (80 MB). Minishell will appear here shortly. ]\n";
     }
     else
     {
         setStatus("Cold booting Alpine Linux. The kernel boots in the serial console. This takes 3–5 minutes — watch the boot log below.");
-        showSerialLog();
     }
 
     setButtonState({
@@ -206,14 +208,25 @@ async function startEmulator()
     emulator = new window.V86(buildConfig());
 
     emulator.add_listener("emulator-loaded", () => {
-        setStatus(currentBootMode === "state"
-            ? "Emulator loaded — restoring saved state."
-            : "Kernel and initramfs loaded. Linux is booting in the background (ttyS0). Watch the boot log below.");
+        if(currentBootMode === "state")
+        {
+            setStatus("State downloaded — resuming VM. Minishell prompt will appear in the boot log below.");
+            serialLog.status.textContent = "restoring…";
+            serialLog.textarea.value += "[ State loaded. Resuming VM… ]\n";
+        }
+        else
+        {
+            setStatus("Kernel and initramfs loaded. Linux is booting in the background (ttyS0). Watch the boot log below.");
+        }
     });
 
     emulator.add_listener("emulator-ready", () => {
-        setStatus("VM ready. Click inside the VGA screen above then interact with minishell (or type in the boot log terminal).");
-        if(serialLog.status) serialLog.status.textContent = "running ✓";
+        setStatus("VM running — type in the boot log terminal below, or click the VGA screen.");
+        serialLog.status.textContent = "running ✓";
+        if(currentBootMode === "state")
+        {
+            serialLog.textarea.value += "[ VM resumed. Type below to interact with minishell. ]\n";
+        }
     });
 
     emulator.add_listener("serial0-output-byte", byte => {
@@ -272,6 +285,35 @@ ui.resume.addEventListener("click", async () => {
 
 ui.restart.addEventListener("click", () => {
     void startEmulator();
+});
+
+// Send keyboard input typed into the serial log to v86's serial port.
+// v86 echoes chars back via serial0-output-byte, so we prevent the textarea
+// from inserting characters natively to avoid duplicates.
+serialLog.textarea.addEventListener("keydown", e => {
+    if(!emulator) return;
+    e.preventDefault();
+    if(e.key === "Enter")
+    {
+        emulator.serial0_send("\n");
+    }
+    else if(e.key === "Backspace")
+    {
+        emulator.serial0_send("\x7f");
+    }
+    else if(e.key === "Tab")
+    {
+        emulator.serial0_send("\t");
+    }
+    else if(e.ctrlKey && e.key.length === 1)
+    {
+        const code = e.key.toUpperCase().charCodeAt(0) - 64;
+        if(code > 0 && code < 32) emulator.serial0_send(String.fromCharCode(code));
+    }
+    else if(!e.ctrlKey && !e.altKey && !e.metaKey && e.key.length === 1)
+    {
+        emulator.serial0_send(e.key);
+    }
 });
 
 void detectBootMode();
