@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Minishell in the Browser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <main class="layout">
+        <section class="hero">
+            <p class="eyebrow">42 project, browser-hosted</p>
+            <h1>Minishell running inside a virtual Linux machine.</h1>
+            <p class="lede">
+                This page embeds a full x86 Linux guest with v86, then launches my C minishell
+                inside that environment so visitors can interact with the project directly.
+            </p>
+
+            <div class="actions">
+                <button id="start-emulator" class="button button-primary" type="button">Start demo</button>
+                <button id="pause-emulator" class="button button-secondary" type="button" disabled>Pause</button>
+                <button id="resume-emulator" class="button button-secondary" type="button" disabled>Resume</button>
+                <button id="restart-emulator" class="button button-secondary" type="button" disabled>Restart</button>
+            </div>
+
+            <dl class="facts">
+                <div>
+                    <dt>Boot target</dt>
+                    <dd>Alpine or Buildroot guest</dd>
+                </div>
+                <div>
+                    <dt>Runtime</dt>
+                    <dd>v86 in WebAssembly</dd>
+                </div>
+                <div>
+                    <dt>Recommended UX</dt>
+                    <dd>Restore from saved state</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="terminal-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-title">Interactive VM</p>
+                    <p id="status-line" class="panel-subtitle">Idle. Add the assets listed in the README, then start the demo.</p>
+                </div>
+                <span id="asset-mode" class="badge">Waiting for assets</span>
+            </div>
+
+            <div id="screen_container" class="screen-shell">
+                <div class="screen-text"></div>
+                <canvas></canvas>
+            </div>
+
+            <p class="hint">
+                After boot (3–5 min), click inside the VGA screen above to interact with minishell.
+                Use <strong>Ctrl</strong> + <strong>Alt</strong> to release keyboard focus.
+            </p>
+
+            <div id="serial-log-wrap" class="serial-log-wrap" hidden>
+                <div class="serial-log-header">
+                    <span class="serial-log-label">Boot log &mdash; serial console (ttyS0)</span>
+                    <span id="serial-log-status" class="serial-log-status">waiting…</span>
+                </div>
+                <textarea id="serial_log" class="serial-log" readonly spellcheck="false"></textarea>
+            </div>
+        </section>
+    </main>
+
+    <script src="./assets/libv86.js"></script>
+    <script type="module" src="./app.js"></script>
+</body>
+</html>
