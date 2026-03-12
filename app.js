@@ -22,6 +22,7 @@ const ui = {
 const serialLog = {
     wrap: document.getElementById("serial-log-wrap"),
     textarea: document.getElementById("serial_log"),
+    input: document.getElementById("serial_input"),
     status: document.getElementById("serial-log-status"),
 };
 
@@ -42,6 +43,16 @@ function appendSerialByte(byte)
     const chr = String.fromCharCode(byte);
     serialLog.textarea.value += chr;
     serialLog.textarea.scrollTop = serialLog.textarea.scrollHeight;
+}
+
+function sendSerialText(text)
+{
+    if(!emulator || !text)
+    {
+        return;
+    }
+
+    emulator.serial0_send(text);
 }
 
 let emulator;
@@ -295,24 +306,62 @@ serialLog.textarea.addEventListener("keydown", e => {
     e.preventDefault();
     if(e.key === "Enter")
     {
-        emulator.serial0_send("\n");
+        sendSerialText("\n");
     }
     else if(e.key === "Backspace")
     {
-        emulator.serial0_send("\x7f");
+        sendSerialText("\x7f");
     }
     else if(e.key === "Tab")
     {
-        emulator.serial0_send("\t");
+        sendSerialText("\t");
     }
     else if(e.ctrlKey && e.key.length === 1)
     {
         const code = e.key.toUpperCase().charCodeAt(0) - 64;
-        if(code > 0 && code < 32) emulator.serial0_send(String.fromCharCode(code));
+        if(code > 0 && code < 32) sendSerialText(String.fromCharCode(code));
     }
     else if(!e.ctrlKey && !e.altKey && !e.metaKey && e.key.length === 1)
     {
-        emulator.serial0_send(e.key);
+        sendSerialText(e.key);
+    }
+});
+
+// Dedicated input for mobile keyboards; sends text then clears itself.
+serialLog.input.addEventListener("input", e => {
+    if(!emulator)
+    {
+        e.target.value = "";
+        return;
+    }
+
+    if(e.target.value)
+    {
+        sendSerialText(e.target.value);
+        e.target.value = "";
+    }
+});
+
+serialLog.input.addEventListener("keydown", e => {
+    if(!emulator) return;
+
+    if(e.key === "Enter")
+    {
+        e.preventDefault();
+        sendSerialText("\n");
+    }
+    else if(e.key === "Backspace" && !e.target.value)
+    {
+        e.preventDefault();
+        sendSerialText("\x7f");
+    }
+});
+
+// On touch devices, tapping the VM area focuses mobile input for easier typing.
+ui.screen.addEventListener("pointerdown", () => {
+    if(window.matchMedia("(pointer: coarse)").matches)
+    {
+        serialLog.input.focus();
     }
 });
 
