@@ -1,6 +1,5 @@
 build/
 *.tar
 *.tar.gz
-*.bin
 .DS_Store
 node_modules/
