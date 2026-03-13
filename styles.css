@@ -224,6 +224,10 @@ h1 {
     margin-top: 14px;
 }
 
+.mobile-input-wrap.is-visible {
+    display: block;
+}
+
 .mobile-input-row {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -294,6 +298,10 @@ h1 {
     .screen-shell {
         min-height: 400px;
         padding: 12px;
+    }
+
+    .mobile-input-wrap {
+        display: block;
     }
 
 }

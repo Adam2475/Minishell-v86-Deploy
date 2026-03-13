@@ -42,14 +42,36 @@ function setStatus(message)
     ui.status.textContent = message;
 }
 
-function sendSerialText(text)
+function refreshMobileInputVisibility()
+{
+    const isTouchCapable =
+        window.matchMedia("(pointer: coarse)").matches ||
+        window.matchMedia("(hover: none)").matches ||
+        (navigator.maxTouchPoints || 0) > 0;
+
+    const isNarrowViewport = window.innerWidth <= 860;
+
+    ui.mobileForm.classList.toggle("is-visible", isTouchCapable || isNarrowViewport);
+}
+
+function sendGuestText(text)
 {
     if(!emulator || !text)
     {
         return;
     }
 
-    emulator.serial0_send(text);
+    // Prefer keyboard injection for the visible VGA terminal.
+    if(typeof emulator.keyboard_send_text === "function")
+    {
+        void emulator.keyboard_send_text(text);
+    }
+
+    // Keep serial as fallback for ttyS0-based sessions.
+    if(typeof emulator.serial0_send === "function")
+    {
+        emulator.serial0_send(text);
+    }
 }
 
 function setButtonState({ startDisabled, pauseDisabled, resumeDisabled, restartDisabled })
@@ -249,7 +271,7 @@ ui.mobileForm.addEventListener("submit", e => {
     {
         return;
     }
-    sendSerialText(command + "\n");
+    sendGuestText(command + "\n");
     ui.mobileInput.value = "";
 });
 
@@ -260,14 +282,14 @@ ui.mobileInput.addEventListener("keydown", e => {
         const command = ui.mobileInput.value;
         if(command)
         {
-            sendSerialText(command + "\n");
+            sendGuestText(command + "\n");
             ui.mobileInput.value = "";
         }
     }
     else if(e.key === "Backspace" && e.target.value.length === 0)
     {
         e.preventDefault();
-        sendSerialText("\x7f");
+        sendGuestText("\x7f");
     }
 });
 
@@ -277,5 +299,8 @@ ui.screen.addEventListener("pointerdown", () => {
         ui.mobileInput.focus();
     }
 });
+
+window.addEventListener("resize", refreshMobileInputVisibility);
+refreshMobileInputVisibility();
 
 void detectBootMode();
