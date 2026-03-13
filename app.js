@@ -19,46 +19,8 @@ const ui = {
     screen: document.getElementById("screen_container"),
 };
 
-const serialLog = {
-    wrap: document.getElementById("serial-log-wrap"),
-    textarea: document.getElementById("serial_log"),
-    input: document.getElementById("serial_input"),
-    status: document.getElementById("serial-log-status"),
-};
-
-function showSerialLog()
-{
-    serialLog.wrap.hidden = false;
-    serialLog.textarea.value = "";
-    serialLog.status.textContent = "booting…";
-}
-
-function hideSerialLog()
-{
-    serialLog.wrap.hidden = true;
-}
-
-function appendSerialByte(byte)
-{
-    const chr = String.fromCharCode(byte);
-    serialLog.textarea.value += chr;
-    serialLog.textarea.scrollTop = serialLog.textarea.scrollHeight;
-}
-
-function sendSerialText(text)
-{
-    if(!emulator || !text)
-    {
-        return;
-    }
-
-    emulator.serial0_send(text);
-}
-
 let emulator;
 let currentBootMode = "none";
-let _serialBanner = "";
-let _serialBannerFound = false;
 
 async function fileExists(url)
 {
@@ -173,8 +135,6 @@ async function destroyEmulator()
 
     await emulator.destroy();
     emulator = undefined;
-    _serialBanner = "";
-    _serialBannerFound = false;
 }
 
 async function startEmulator()
@@ -196,17 +156,13 @@ async function startEmulator()
 
     await destroyEmulator();
 
-    showSerialLog();
-
     if(currentBootMode === "state")
     {
         setStatus("Downloading saved state (80 MB)… this can take 15–60 s depending on your connection.");
-        serialLog.status.textContent = "loading state…";
-        serialLog.textarea.value = "[ Saved state is downloading (80 MB). Minishell will appear here shortly. ]\n";
     }
     else
     {
-        setStatus("Cold booting Alpine Linux. The kernel boots in the serial console. This takes 3–5 minutes — watch the boot log below.");
+        setStatus("Cold booting Alpine Linux. This can take 3-5 minutes on first load.");
     }
 
     setButtonState({
@@ -221,40 +177,16 @@ async function startEmulator()
     emulator.add_listener("emulator-loaded", () => {
         if(currentBootMode === "state")
         {
-            setStatus("State downloaded — resuming VM. Minishell prompt will appear in the boot log below.");
-            serialLog.status.textContent = "restoring…";
-            serialLog.textarea.value += "[ State loaded. Resuming VM… ]\n";
+            setStatus("State downloaded - restoring VM now.");
         }
         else
         {
-            setStatus("Kernel and initramfs loaded. Linux is booting in the background (ttyS0). Watch the boot log below.");
+            setStatus("Kernel and initramfs loaded. Linux boot is in progress.");
         }
     });
 
     emulator.add_listener("emulator-ready", () => {
-        setStatus("VM running — type in the boot log terminal below, or click the VGA screen.");
-        serialLog.status.textContent = "running ✓";
-        if(currentBootMode === "state")
-        {
-            serialLog.textarea.value += "[ VM resumed. Type below to interact with minishell. ]\n";
-        }
-    });
-
-    emulator.add_listener("serial0-output-byte", byte => {
-        appendSerialByte(byte);
-
-        // Rolling buffer: detect banner without reading the whole textarea
-        _serialBanner += String.fromCharCode(byte);
-        if(_serialBanner.length > 80)
-        {
-            _serialBanner = _serialBanner.slice(-60);
-        }
-        if(!_serialBannerFound && _serialBanner.includes("Minishell portfolio demo"))
-        {
-            _serialBannerFound = true;
-            serialLog.status.textContent = "minishell ready ✓";
-            setStatus("Minishell is running in the boot log terminal below. Click there and type — or use the VGA screen above.");
-        }
+        setStatus("VM ready. Tap/click inside the VM screen to type in minishell.");
     });
 }
 
@@ -296,73 +228,6 @@ ui.resume.addEventListener("click", async () => {
 
 ui.restart.addEventListener("click", () => {
     void startEmulator();
-});
-
-// Send keyboard input typed into the serial log to v86's serial port.
-// v86 echoes chars back via serial0-output-byte, so we prevent the textarea
-// from inserting characters natively to avoid duplicates.
-serialLog.textarea.addEventListener("keydown", e => {
-    if(!emulator) return;
-    e.preventDefault();
-    if(e.key === "Enter")
-    {
-        sendSerialText("\n");
-    }
-    else if(e.key === "Backspace")
-    {
-        sendSerialText("\x7f");
-    }
-    else if(e.key === "Tab")
-    {
-        sendSerialText("\t");
-    }
-    else if(e.ctrlKey && e.key.length === 1)
-    {
-        const code = e.key.toUpperCase().charCodeAt(0) - 64;
-        if(code > 0 && code < 32) sendSerialText(String.fromCharCode(code));
-    }
-    else if(!e.ctrlKey && !e.altKey && !e.metaKey && e.key.length === 1)
-    {
-        sendSerialText(e.key);
-    }
-});
-
-// Dedicated input for mobile keyboards; sends text then clears itself.
-serialLog.input.addEventListener("input", e => {
-    if(!emulator)
-    {
-        e.target.value = "";
-        return;
-    }
-
-    if(e.target.value)
-    {
-        sendSerialText(e.target.value);
-        e.target.value = "";
-    }
-});
-
-serialLog.input.addEventListener("keydown", e => {
-    if(!emulator) return;
-
-    if(e.key === "Enter")
-    {
-        e.preventDefault();
-        sendSerialText("\n");
-    }
-    else if(e.key === "Backspace" && !e.target.value)
-    {
-        e.preventDefault();
-        sendSerialText("\x7f");
-    }
-});
-
-// On touch devices, tapping the VM area focuses mobile input for easier typing.
-ui.screen.addEventListener("pointerdown", () => {
-    if(window.matchMedia("(pointer: coarse)").matches)
-    {
-        serialLog.input.focus();
-    }
 });
 
 void detectBootMode();
