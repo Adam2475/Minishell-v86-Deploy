@@ -219,6 +219,37 @@ h1 {
     font-size: 0.86rem;
 }
 
+.mobile-input-wrap {
+    display: none;
+    margin-top: 14px;
+}
+
+.mobile-input-label {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.mobile-shell-input {
+    width: 100%;
+    border: 1px solid rgba(201, 255, 102, 0.2);
+    border-radius: 12px;
+    background: rgba(5, 7, 6, 0.85);
+    color: var(--text);
+    padding: 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 16px;
+    outline: none;
+}
+
+.mobile-shell-input:focus {
+    border-color: rgba(201, 255, 102, 0.5);
+}
+
 @media (max-width: 860px) {
     .layout {
         padding-top: 28px;
@@ -236,6 +267,10 @@ h1 {
     .screen-shell {
         min-height: 400px;
         padding: 12px;
+    }
+
+    .mobile-input-wrap {
+        display: block;
     }
 
 }

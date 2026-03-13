@@ -17,6 +17,7 @@ const ui = {
     status: document.getElementById("status-line"),
     assetMode: document.getElementById("asset-mode"),
     screen: document.getElementById("screen_container"),
+    mobileInput: document.getElementById("mobile-shell-input"),
 };
 
 let emulator;
@@ -38,6 +39,16 @@ async function fileExists(url)
 function setStatus(message)
 {
     ui.status.textContent = message;
+}
+
+function sendSerialText(text)
+{
+    if(!emulator || !text)
+    {
+        return;
+    }
+
+    emulator.serial0_send(text);
 }
 
 function setButtonState({ startDisabled, pauseDisabled, resumeDisabled, restartDisabled })
@@ -228,6 +239,31 @@ ui.resume.addEventListener("click", async () => {
 
 ui.restart.addEventListener("click", () => {
     void startEmulator();
+});
+
+ui.mobileInput.addEventListener("input", e => {
+    sendSerialText(e.target.value);
+    e.target.value = "";
+});
+
+ui.mobileInput.addEventListener("keydown", e => {
+    if(e.key === "Enter")
+    {
+        e.preventDefault();
+        sendSerialText("\n");
+    }
+    else if(e.key === "Backspace" && e.target.value.length === 0)
+    {
+        e.preventDefault();
+        sendSerialText("\x7f");
+    }
+});
+
+ui.screen.addEventListener("pointerdown", () => {
+    if(window.matchMedia("(pointer: coarse)").matches)
+    {
+        ui.mobileInput.focus();
+    }
 });
 
 void detectBootMode();
