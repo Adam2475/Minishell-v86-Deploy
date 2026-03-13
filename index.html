@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Minishell in the Browser</title>
+    <title>42_Minishell</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -12,11 +12,10 @@
 <body>
     <main class="layout">
         <section class="hero">
-            <p class="eyebrow">42 project, browser-hosted</p>
-            <h1>Minishell running inside a virtual Linux machine.</h1>
+            <!-- <p class="eyebrow">42 project, browser-hosted</p> -->
+            <h1>Try Minishell</h1>
             <p class="lede">
-                This page embeds a full x86 Linux guest with v86, then launches my C minishell
-                inside that environment so visitors can interact with the project directly.
+                This page uses v86 to virtualize a Linux enviroment on your browser.
             </p>
 
             <div class="actions">
@@ -25,28 +24,13 @@
                 <button id="resume-emulator" class="button button-secondary" type="button" disabled>Resume</button>
                 <button id="restart-emulator" class="button button-secondary" type="button" disabled>Restart</button>
             </div>
-
-            <dl class="facts">
-                <div>
-                    <dt>Boot target</dt>
-                    <dd>Alpine or Buildroot guest</dd>
-                </div>
-                <div>
-                    <dt>Runtime</dt>
-                    <dd>v86 in WebAssembly</dd>
-                </div>
-                <div>
-                    <dt>Recommended UX</dt>
-                    <dd>Restore from saved state</dd>
-                </div>
-            </dl>
         </section>
 
         <section class="terminal-panel">
             <div class="panel-header">
                 <div>
                     <p class="panel-title">Interactive VM</p>
-                    <p id="status-line" class="panel-subtitle">Idle. Add the assets listed in the README, then start the demo.</p>
+                    <p id="status-line" class="panel-subtitle">Idle. Press start to begin.</p>
                 </div>
                 <span id="asset-mode" class="badge">Waiting for assets</span>
             </div>
