@@ -17,6 +17,7 @@ const ui = {
     status: document.getElementById("status-line"),
     assetMode: document.getElementById("asset-mode"),
     screen: document.getElementById("screen_container"),
+    mobileForm: document.getElementById("mobile-shell-form"),
     mobileInput: document.getElementById("mobile-shell-input"),
 };
 
@@ -241,16 +242,27 @@ ui.restart.addEventListener("click", () => {
     void startEmulator();
 });
 
-ui.mobileInput.addEventListener("input", e => {
-    sendSerialText(e.target.value);
-    e.target.value = "";
+ui.mobileForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const command = ui.mobileInput.value;
+    if(!command)
+    {
+        return;
+    }
+    sendSerialText(command + "\n");
+    ui.mobileInput.value = "";
 });
 
 ui.mobileInput.addEventListener("keydown", e => {
     if(e.key === "Enter")
     {
         e.preventDefault();
-        sendSerialText("\n");
+        const command = ui.mobileInput.value;
+        if(command)
+        {
+            sendSerialText(command + "\n");
+            ui.mobileInput.value = "";
+        }
     }
     else if(e.key === "Backspace" && e.target.value.length === 0)
     {
